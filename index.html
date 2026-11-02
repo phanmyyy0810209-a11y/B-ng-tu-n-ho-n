@@ -1,0 +1,1166 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Giải Mã Bảng Tuần Hoàn - Hành Trình Chinh Phục 118 Nguyên Tố</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Orbitron:wght@500;700&display=swap');
+
+        :root {
+            --primary: #06b6d4; /* Cyan */
+            --primary-glow: rgba(6, 182, 212, 0.6);
+            --secondary: #8b5cf6; /* Purple */
+            --bg-dark: #0f172a;
+            --panel-bg: rgba(30, 41, 59, 0.8);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            color: #f8fafc;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(6, 182, 212, 0.1), transparent 25%),
+                radial-gradient(circle at 85% 30%, rgba(139, 92, 246, 0.1), transparent 25%);
+            background-attachment: fixed;
+            user-select: none; /* Prevent text selection during gameplay */
+        }
+
+        h1, h2, h3, .font-sci {
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        /* Animations & Glows */
+        .neon-border {
+            border: 1px solid var(--primary);
+            box-shadow: 0 0 10px var(--primary-glow), inset 0 0 10px var(--primary-glow);
+        }
+        
+        .neon-text {
+            text-shadow: 0 0 8px var(--primary-glow);
+        }
+
+        .btn-sci {
+            background: linear-gradient(45deg, #06b6d4, #3b82f6);
+            border: none;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: bold;
+        }
+
+        .btn-sci:hover {
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.8);
+            transform: translateY(-2px);
+        }
+
+        .btn-sci:disabled {
+            background: #475569;
+            box-shadow: none;
+            transform: none;
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+
+        /* Glassmorphism Panels */
+        .glass-panel {
+            background: var(--panel-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+        }
+
+        /* Element Cards */
+        .element-card {
+            width: 70px;
+            height: 90px;
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            border: 2px solid #334155;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .element-card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 0 15px var(--primary-glow);
+        }
+
+        .element-card.selected {
+            border-color: #f59e0b;
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.8);
+            transform: scale(1.1);
+            z-index: 10;
+        }
+
+        .element-card .atomic-num { font-size: 0.75rem; color: #94a3b8; position: absolute; top: 4px; left: 6px; }
+        .element-card .symbol { font-size: 1.5rem; font-weight: bold; color: var(--primary); font-family: 'Orbitron', sans-serif;}
+        .element-card .name { font-size: 0.6rem; color: #cbd5e1; position: absolute; bottom: 4px; width: 100%; text-align: center;}
+
+        /* Drop Zones */
+        .drop-zone {
+            width: 74px;
+            height: 94px;
+            border: 2px dashed #475569;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .drop-zone.active-target {
+            border-color: #10b981;
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        /* Map Nodes */
+        .map-node {
+            width: 80px; height: 80px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 2rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            background: #1e293b;
+            border: 3px solid #334155;
+        }
+        .map-node.unlocked {
+            border-color: var(--primary);
+            box-shadow: 0 0 25px var(--primary-glow);
+            color: var(--primary);
+        }
+        .map-node.locked {
+            color: #475569;
+            cursor: not-allowed;
+        }
+        .map-node.completed {
+            border-color: #10b981;
+            box-shadow: 0 0 25px rgba(16, 185, 129, 0.5);
+            color: #10b981;
+        }
+
+        /* Modal */
+        #modal-overlay {
+            backdrop-filter: blur(5px);
+            background: rgba(0, 0, 0, 0.7);
+        }
+
+        /* Animations */
+        @keyframes pulse-green {
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { box-shadow: 0 0 0 15px rgba(16, 185, 129, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+        .anim-correct { animation: pulse-green 1s; border-color: #10b981 !important; }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-5px); }
+            40%, 80% { transform: translateX(5px); }
+        }
+        .anim-wrong { animation: shake 0.5s; border-color: #ef4444 !important; }
+
+        /* S2 Specific */
+        .s2-label {
+            padding: 8px 16px;
+            background: #334155;
+            border: 1px solid #475569;
+            border-radius: 999px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+        .s2-label:hover { background: #475569; }
+        .s2-label.selected { border-color: #f59e0b; background: rgba(245, 158, 11, 0.2); }
+        .s2-drop {
+            border: 2px dashed #64748b;
+            border-radius: 8px;
+            min-height: 40px;
+            display: flex; align-items: center; justify-content: center;
+            color: #94a3b8; font-size: 0.8rem;
+            text-align: center; padding: 4px;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-dark); }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+    </style>
+</head>
+<body class="flex flex-col h-screen">
+
+    <!-- Header HUD -->
+    <header class="glass-panel m-4 p-4 flex justify-between items-center z-50">
+        <div class="flex items-center gap-3">
+            <i class="fa-solid fa-atom text-3xl text-cyan-400 animate-spin" style="animation-duration: 4s;"></i>
+            <div>
+                <h1 class="text-xl font-bold font-sci text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">GIẢI MÃ BẢNG TUẦN HOÀN</h1>
+                <p class="text-xs text-slate-400">Hành Trình Chinh Phục 118 Nguyên Tố</p>
+            </div>
+        </div>
+        <div class="flex gap-6 text-center">
+            <div>
+                <p class="text-xs text-slate-400 uppercase">Thời gian</p>
+                <p class="text-xl font-sci text-cyan-400" id="hud-time">00:00</p>
+            </div>
+            <div>
+                <p class="text-xs text-slate-400 uppercase">Điểm số</p>
+                <p class="text-xl font-sci text-yellow-400" id="hud-score">0</p>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 relative overflow-hidden flex items-center justify-center p-4">
+        
+        <!-- ================= SCREEN: HOME ================= -->
+        <div id="screen-home" class="w-full max-w-4xl text-center transition-all duration-500">
+            <i class="fa-solid fa-microscope text-6xl text-cyan-400 mb-6 neon-text"></i>
+            <h2 class="text-4xl md:text-5xl font-sci mb-6">TRUNG TÂM NGHIÊN CỨU<br><span class="text-cyan-400">DỮ LIỆU NGUYÊN TỐ</span></h2>
+            <p class="text-lg text-slate-300 mb-8 max-w-2xl mx-auto">Hệ thống cơ sở dữ liệu Bảng tuần hoàn đã bị một thế lực bí ẩn mã hóa. Hãy vận dụng tư duy khoa học, vượt qua 3 chặng thử thách để khôi phục lại trật tự của 118 nguyên tố!</p>
+            
+            <div class="glass-panel p-6 max-w-md mx-auto mb-8 text-left">
+                <h3 class="font-bold text-lg mb-4 text-center border-b border-slate-600 pb-2">HƯỚNG DẪN THAO TÁC</h3>
+                <ul class="text-sm space-y-2 text-slate-300">
+                    <li><i class="fa-solid fa-hand-pointer text-cyan-400 w-5"></i> <strong>Chạm/Click</strong> vào đối tượng để Chọn (viền cam).</li>
+                    <li><i class="fa-solid fa-crosshairs text-cyan-400 w-5"></i> <strong>Chạm/Click</strong> vào ô trống để Đặt đối tượng vào.</li>
+                    <li><i class="fa-solid fa-brain text-cyan-400 w-5"></i> Quan sát, tìm quy luật trước khi trả lời câu hỏi.</li>
+                </ul>
+            </div>
+
+            <button onclick="startGame()" class="btn-sci px-10 py-4 rounded-full text-xl shadow-[0_0_15px_rgba(6,182,212,0.5)]">
+                <i class="fa-solid fa-power-off mr-2"></i> Kích hoạt hệ thống
+            </button>
+        </div>
+
+        <!-- ================= SCREEN: MAP ================= -->
+        <div id="screen-map" class="hidden w-full max-w-4xl text-center transition-all duration-500">
+            <h2 class="text-3xl font-sci mb-2 text-cyan-400">BẢN ĐỒ GIẢI MÃ</h2>
+            <p class="text-slate-400 mb-12">Chọn chặng thử thách để bắt đầu khôi phục dữ liệu.</p>
+            
+            <div class="flex flex-col md:flex-row items-center justify-center gap-8 relative">
+                <!-- Decorative Line -->
+                <div class="hidden md:block absolute top-1/2 left-1/4 right-1/4 h-1 bg-slate-700 -z-10 transform -translate-y-1/2"></div>
+                
+                <!-- Node 1 -->
+                <div class="flex flex-col items-center gap-4">
+                    <div id="node-1" class="map-node unlocked" onclick="enterStage(1)">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </div>
+                    <div class="text-center">
+                        <h3 class="font-bold text-lg">Chặng 1</h3>
+                        <p class="text-xs text-slate-400">Truy tìm quy luật</p>
+                    </div>
+                </div>
+
+                <!-- Node 2 -->
+                <div class="flex flex-col items-center gap-4">
+                    <div id="node-2" class="map-node locked" onclick="enterStage(2)">
+                        <i class="fa-solid fa-lock"></i>
+                    </div>
+                    <div class="text-center">
+                        <h3 class="font-bold text-lg">Chặng 2</h3>
+                        <p class="text-xs text-slate-400">Giải phẫu ô nguyên tố</p>
+                    </div>
+                </div>
+
+                <!-- Node 3 -->
+                <div class="flex flex-col items-center gap-4">
+                    <div id="node-3" class="map-node locked" onclick="enterStage(3)">
+                        <i class="fa-solid fa-lock"></i>
+                    </div>
+                    <div class="text-center">
+                        <h3 class="font-bold text-lg">Chặng 3</h3>
+                        <p class="text-xs text-slate-400">Chinh phục bản đồ</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= SCREEN: STAGE 1 ================= -->
+        <div id="screen-stage1" class="hidden w-full max-w-5xl transition-all duration-500 flex flex-col h-full">
+            <div class="text-center mb-4">
+                <h2 class="text-2xl font-sci text-cyan-400">CHẶNG 1: TRUY TÌM QUY LUẬT</h2>
+                <p class="text-sm text-slate-300">Nhiệm vụ: Sắp xếp 10 nguyên tố đầu tiên vào đúng vị trí. (Click để chọn -> Click ô trống để đặt)</p>
+            </div>
+
+            <!-- Target Drop Zones -->
+            <div class="glass-panel p-6 mb-6">
+                <div class="flex flex-wrap justify-center gap-2 md:gap-4" id="s1-targets">
+                    <!-- JS Generated 10 slots -->
+                </div>
+            </div>
+
+            <!-- Source Elements -->
+            <div class="glass-panel p-6 bg-slate-800/80 mt-auto">
+                <p class="text-xs text-slate-400 mb-2 text-center uppercase">Kho dữ liệu hỗn loạn</p>
+                <div class="flex flex-wrap justify-center gap-2 md:gap-4" id="s1-sources">
+                    <!-- JS Generated 10 cards -->
+                </div>
+            </div>
+
+            <div class="mt-4 text-center">
+                <button onclick="checkStage1Sort()" class="btn-sci px-8 py-3 rounded-lg"><i class="fa-solid fa-check mr-2"></i> Kiểm tra trật tự</button>
+            </div>
+        </div>
+
+        <!-- ================= SCREEN: STAGE 2 ================= -->
+        <div id="screen-stage2" class="hidden w-full max-w-4xl transition-all duration-500 flex flex-col h-full">
+            <div class="text-center mb-4">
+                <h2 class="text-2xl font-sci text-cyan-400">CHẶNG 2: GIẢI PHẪU Ô NGUYÊN TỐ</h2>
+                <p class="text-sm text-slate-300">Nhiệm vụ: Ghép đúng các nhãn thông tin vào ô nguyên tố Sodium (Na).</p>
+            </div>
+
+            <div class="flex flex-col md:flex-row gap-8 items-center justify-center flex-1">
+                <!-- Element Cell Visual -->
+                <div class="glass-panel p-8 w-64 h-80 relative flex flex-col items-center justify-center bg-slate-800 border-2 border-cyan-700">
+                    <!-- Drops -->
+                    <div class="absolute top-4 left-4 w-16 h-10 s2-drop" data-correct="z" onclick="handleS2Drop(this)">Z</div>
+                    
+                    <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center w-full">
+                        <div class="text-5xl font-bold font-sci text-white mb-2 s2-drop w-24 h-16" data-correct="sym" onclick="handleS2Drop(this)">Kí hiệu</div>
+                        <div class="text-lg text-slate-300 s2-drop w-32 h-8" data-correct="name" onclick="handleS2Drop(this)">Tên</div>
+                    </div>
+
+                    <div class="absolute bottom-4 w-32 h-8 s2-drop" data-correct="mass" onclick="handleS2Drop(this)">Khối lượng</div>
+                </div>
+
+                <!-- Labels Pool -->
+                <div class="glass-panel p-6 w-full md:w-1/2">
+                    <h3 class="text-lg font-bold mb-4 text-center border-b border-slate-600 pb-2">Nhãn dữ liệu</h3>
+                    <div class="flex flex-col gap-4" id="s2-labels">
+                        <div class="s2-label" onclick="selectS2Label(this, 'z')">11 (Số hiệu nguyên tử)</div>
+                        <div class="s2-label" onclick="selectS2Label(this, 'sym')">Na (Kí hiệu hóa học)</div>
+                        <div class="s2-label" onclick="selectS2Label(this, 'name')">Sodium (Tên nguyên tố)</div>
+                        <div class="s2-label" onclick="selectS2Label(this, 'mass')">22.99 (NTK tương đối)</div>
+                    </div>
+                    <div class="mt-8 text-center">
+                        <button onclick="checkStage2()" class="btn-sci px-8 py-3 rounded-lg"><i class="fa-solid fa-microscope mr-2"></i> Phân tích dữ liệu</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= SCREEN: STAGE 3 ================= -->
+        <div id="screen-stage3" class="hidden w-full max-w-5xl transition-all duration-500 flex flex-col h-full">
+            <div class="text-center mb-2">
+                <h2 class="text-2xl font-sci text-cyan-400">CHẶNG 3: BÍ MẬT CỦA CHU KÌ & NHÓM</h2>
+                <p class="text-sm text-slate-300" id="s3-instruction">Nhiệm vụ: Sắp xếp các nguyên tố để tìm ra quy luật Hàng Ngang (Chu kì).</p>
+            </div>
+
+            <!-- Interactive Area for S3 -->
+            <div class="glass-panel p-4 mb-4 flex-1 flex flex-col justify-center" id="s3-interactive">
+                <!-- Dynamic Content injected via JS -->
+            </div>
+            
+            <div class="mt-2 text-center" id="s3-controls">
+                <button onclick="checkS3Rows()" id="btn-s3-check" class="btn-sci px-8 py-3 rounded-lg"><i class="fa-solid fa-bolt mr-2"></i> Xác nhận Hàng Ngang</button>
+            </div>
+        </div>
+
+        <!-- ================= SCREEN: RESULT ================= -->
+        <div id="screen-result" class="hidden w-full max-w-4xl text-center transition-all duration-500">
+            <i class="fa-solid fa-trophy text-6xl text-yellow-400 mb-6 neon-text"></i>
+            <h2 class="text-4xl font-sci mb-2 text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500">BẢNG TUẦN HOÀN ĐÃ ĐƯỢC KHÔI PHỤC!</h2>
+            <p class="text-xl text-slate-300 mb-6">Bạn đã hoàn thành xuất sắc nhiệm vụ giải mã.</p>
+            
+            <div class="glass-panel p-8 max-w-2xl mx-auto mb-8">
+                <div class="grid grid-cols-2 gap-6 text-left">
+                    <div class="bg-slate-800 p-4 rounded-lg border border-slate-600">
+                        <p class="text-sm text-slate-400">Tổng điểm</p>
+                        <p class="text-3xl font-sci text-yellow-400" id="final-score">100</p>
+                    </div>
+                    <div class="bg-slate-800 p-4 rounded-lg border border-slate-600">
+                        <p class="text-sm text-slate-400">Thời gian hoàn thành</p>
+                        <p class="text-3xl font-sci text-cyan-400" id="final-time">05:20</p>
+                    </div>
+                </div>
+                
+                <div class="mt-8 text-left border-t border-slate-700 pt-6">
+                    <h3 class="font-bold text-lg text-center mb-4 text-cyan-400">SƠ ĐỒ TƯ DUY TỔNG KẾT</h3>
+                    <ul class="list-disc pl-5 space-y-2 text-sm text-slate-300">
+                        <li><strong class="text-white">Nguyên tắc sắp xếp:</strong> Theo chiều tăng dần của điện tích hạt nhân (số hiệu nguyên tử).</li>
+                        <li><strong class="text-white">Ô nguyên tố:</strong> Cho biết Số hiệu nguyên tử, Kí hiệu, Tên và Khối lượng nguyên tử.</li>
+                        <li><strong class="text-white">Chu kì (Hàng ngang):</strong> Các nguyên tố có cùng số lớp electron. Số TT chu kì = số lớp e.</li>
+                        <li><strong class="text-white">Nhóm (Cột dọc):</strong> Các nguyên tố có tính chất hóa học tương tự. Nhóm A có số e lớp ngoài cùng bằng nhau (trừ He).</li>
+                    </ul>
+                </div>
+            </div>
+            <button onclick="location.reload()" class="btn-sci px-8 py-3 rounded-full text-lg shadow-[0_0_15px_rgba(6,182,212,0.5)]">
+                <i class="fa-solid fa-rotate-right mr-2"></i> Chơi lại
+            </button>
+        </div>
+
+    </main>
+
+    <!-- Generic Message Modal -->
+    <div id="msg-modal" class="fixed inset-0 z-[100] hidden flex items-center justify-center" style="background: rgba(0,0,0,0.8); backdrop-filter: blur(5px);">
+        <div class="glass-panel w-full max-w-lg p-6 m-4 transform transition-all scale-95 opacity-0" id="msg-content">
+            <div class="text-center mb-6" id="msg-icon-container">
+                <i class="fa-solid fa-robot text-5xl text-cyan-400" id="msg-icon"></i>
+            </div>
+            <h3 class="text-2xl font-bold text-center mb-4 font-sci" id="msg-title">Tiêu đề</h3>
+            <div class="text-slate-300 text-center mb-8" id="msg-body">Nội dung thông báo ở đây.</div>
+            
+            <!-- For Questions -->
+            <div id="msg-options" class="flex flex-col gap-3 hidden mb-6">
+                <!-- Options injected via JS -->
+            </div>
+
+            <div class="text-center">
+                <button id="msg-btn" class="btn-sci px-8 py-2 rounded-lg" onclick="closeModal()">Tiếp tục</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Audio Scripts (Web Audio API for No External Assets) -->
+    <script>
+        // Audio Context setup
+        let audioCtx;
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+        }
+
+        function playSound(type) {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            if (type === 'correct') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
+                osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.1); // E5
+                gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                osc.start(audioCtx.currentTime);
+                osc.stop(audioCtx.currentTime + 0.3);
+            } else if (type === 'wrong') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                osc.start(audioCtx.currentTime);
+                osc.stop(audioCtx.currentTime + 0.3);
+            } else if (type === 'click') {
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
+                osc.start(audioCtx.currentTime);
+                osc.stop(audioCtx.currentTime + 0.05);
+            } else if (type === 'unlock') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(440, audioCtx.currentTime); // A4
+                osc.frequency.setValueAtTime(554.37, audioCtx.currentTime + 0.1); // C#5
+                osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.2); // E5
+                gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
+                gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.8);
+                osc.start(audioCtx.currentTime);
+                osc.stop(audioCtx.currentTime + 0.8);
+            }
+        }
+
+        // --- GLOBAL STATE ---
+        const state = {
+            score: 0,
+            time: 0,
+            timerInterval: null,
+            unlockedStages: [1],
+            currentScreen: 'home'
+        };
+
+        // DOM Elements
+        const elTime = document.getElementById('hud-time');
+        const elScore = document.getElementById('hud-score');
+
+        function formatTime(seconds) {
+            const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+            const s = (seconds % 60).toString().padStart(2, '0');
+            return `${m}:${s}`;
+        }
+
+        function updateHUD() {
+            elScore.innerText = state.score;
+        }
+
+        function addScore(points) {
+            state.score += points;
+            updateHUD();
+            const counter = document.getElementById('hud-score');
+            counter.classList.add('text-white', 'scale-150');
+            setTimeout(() => counter.classList.remove('text-white', 'scale-150'), 300);
+        }
+
+        function switchScreen(screenId) {
+            document.querySelectorAll('main > div').forEach(div => div.classList.add('hidden'));
+            document.getElementById(`screen-${screenId}`).classList.remove('hidden');
+            state.currentScreen = screenId;
+            playSound('click');
+        }
+
+        function startGame() {
+            initAudio();
+            state.time = 0;
+            state.score = 0;
+            updateHUD();
+            state.timerInterval = setInterval(() => {
+                state.time++;
+                elTime.innerText = formatTime(state.time);
+            }, 1000);
+            
+            setupStage1(); // Prep stage 1
+            switchScreen('map');
+        }
+
+        function enterStage(num) {
+            if (!state.unlockedStages.includes(num)) {
+                playSound('wrong');
+                return;
+            }
+            if (num === 1) switchScreen('stage1');
+            if (num === 2) { setupStage2(); switchScreen('stage2'); }
+            if (num === 3) { setupStage3(); switchScreen('stage3'); }
+        }
+
+        function unlockStage(num) {
+            if (!state.unlockedStages.includes(num)) {
+                state.unlockedStages.push(num);
+                const node = document.getElementById(`node-${num}`);
+                node.classList.remove('locked');
+                node.classList.add('unlocked');
+                node.innerHTML = num === 2 ? '<i class="fa-solid fa-flask"></i>' : '<i class="fa-solid fa-map-location-dot"></i>';
+                
+                const prevNode = document.getElementById(`node-${num-1}`);
+                if(prevNode) {
+                    prevNode.classList.remove('unlocked');
+                    prevNode.classList.add('completed');
+                    prevNode.innerHTML = '<i class="fa-solid fa-check"></i>';
+                }
+                playSound('unlock');
+            }
+        }
+
+        // --- MODAL SYSTEM ---
+        let modalCallback = null;
+        function showModal(title, body, type="info", options=null, callback=null) {
+            const modal = document.getElementById('msg-modal');
+            const content = document.getElementById('msg-content');
+            const icon = document.getElementById('msg-icon');
+            const optContainer = document.getElementById('msg-options');
+            
+            document.getElementById('msg-title').innerText = title;
+            document.getElementById('msg-body').innerHTML = body;
+            
+            // Icons & Colors
+            if(type === 'correct') {
+                icon.className = "fa-solid fa-check-circle text-5xl text-green-400";
+                playSound('correct');
+            } else if (type === 'wrong') {
+                icon.className = "fa-solid fa-circle-xmark text-5xl text-red-400";
+                playSound('wrong');
+            } else if (type === 'question') {
+                icon.className = "fa-solid fa-circle-question text-5xl text-yellow-400";
+                playSound('click');
+            } else {
+                icon.className = "fa-solid fa-robot text-5xl text-cyan-400";
+                playSound('click');
+            }
+
+            // Options logic
+            if (options && options.length > 0) {
+                optContainer.classList.remove('hidden');
+                optContainer.innerHTML = '';
+                document.getElementById('msg-btn').classList.add('hidden'); // hide continue btn
+                
+                options.forEach((opt, idx) => {
+                    const btn = document.createElement('button');
+                    btn.className = "p-3 border border-slate-600 rounded-lg hover:bg-slate-700 hover:border-cyan-400 transition-all text-left flex items-center gap-3";
+                    btn.innerHTML = `<span class="w-6 h-6 rounded-full bg-slate-800 flex items-center justify-center text-xs text-cyan-400">${String.fromCharCode(65+idx)}</span> ${opt.text}`;
+                    btn.onclick = () => {
+                        if (opt.isCorrect) {
+                            closeModal();
+                            if (callback) callback(true);
+                        } else {
+                            btn.classList.add('anim-wrong', 'bg-red-900/50');
+                            playSound('wrong');
+                        }
+                    };
+                    optContainer.appendChild(btn);
+                });
+            } else {
+                optContainer.classList.add('hidden');
+                document.getElementById('msg-btn').classList.remove('hidden');
+            }
+
+            modalCallback = (!options && callback) ? callback : null;
+
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                content.classList.remove('scale-95', 'opacity-0');
+                content.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('msg-modal');
+            const content = document.getElementById('msg-content');
+            content.classList.remove('scale-100', 'opacity-100');
+            content.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                if(modalCallback) {
+                    const cb = modalCallback;
+                    modalCallback = null;
+                    cb();
+                }
+            }, 200);
+        }
+
+        // --- SELECT AND MOVE MECHANIC ---
+        let selectedItem = null;
+        let selectedSourceType = null; // 's1', 's2'
+
+        function handleItemClick(el, type, data) {
+            playSound('click');
+            if (selectedItem === el) {
+                // Deselect
+                el.classList.remove('selected');
+                selectedItem = null;
+                selectedSourceType = null;
+                document.querySelectorAll('.drop-zone, .s2-drop').forEach(dz => dz.classList.remove('active-target'));
+                return;
+            }
+
+            // Deselect previous
+            if (selectedItem) selectedItem.classList.remove('selected');
+            
+            selectedItem = el;
+            selectedItem.dataset.val = data;
+            selectedSourceType = type;
+            selectedItem.classList.add('selected');
+
+            // Highlight targets
+            document.querySelectorAll('.drop-zone, .s2-drop').forEach(dz => {
+                if (dz.children.length === 0 || type === 's2') { // S2 allows overwrite visually
+                    dz.classList.add('active-target');
+                }
+            });
+        }
+
+
+        // ================= STAGE 1 LOGIC =================
+        const s1Elements = [
+            { sym: 'H', z: 1, name: 'Hydrogen' }, { sym: 'He', z: 2, name: 'Helium' }, 
+            { sym: 'Li', z: 3, name: 'Lithium' }, { sym: 'Be', z: 4, name: 'Beryllium' },
+            { sym: 'B', z: 5, name: 'Boron' }, { sym: 'C', z: 6, name: 'Carbon' }, 
+            { sym: 'N', z: 7, name: 'Nitrogen' }, { sym: 'O', z: 8, name: 'Oxygen' },
+            { sym: 'F', z: 9, name: 'Fluorine' }, { sym: 'Ne', z: 10, name: 'Neon' }
+        ];
+
+        function createCard(elData, type) {
+            const div = document.createElement('div');
+            div.className = 'element-card shadow-lg';
+            div.innerHTML = `
+                <span class="atomic-num">${elData.z}</span>
+                <span class="symbol">${elData.sym}</span>
+                <span class="name">${elData.name}</span>
+            `;
+            div.onclick = (e) => {
+                e.stopPropagation(); // prevent bubbling to drop zone if inside it
+                // If it's inside a target, clicking it should send it back to source pool
+                if (div.parentElement.classList.contains('drop-zone')) {
+                    document.getElementById('s1-sources').appendChild(div);
+                    playSound('click');
+                } else {
+                    handleItemClick(div, type, elData.z);
+                }
+            };
+            return div;
+        }
+
+        function setupStage1() {
+            const sources = document.getElementById('s1-sources');
+            const targets = document.getElementById('s1-targets');
+            sources.innerHTML = ''; targets.innerHTML = '';
+            
+            // Shuffle elements
+            const shuffled = [...s1Elements].sort(() => Math.random() - 0.5);
+            shuffled.forEach(el => {
+                sources.appendChild(createCard(el, 's1'));
+            });
+
+            // Create 10 empty slots
+            for(let i=1; i<=10; i++) {
+                const dz = document.createElement('div');
+                dz.className = 'drop-zone relative';
+                // Add tiny number hint to slot
+                const hint = document.createElement('span');
+                hint.className = 'absolute text-slate-700 font-bold text-2xl -z-10 select-none';
+                hint.innerText = i;
+                dz.appendChild(hint);
+
+                dz.onclick = () => {
+                    if (selectedItem && selectedSourceType === 's1') {
+                        if (dz.children.length > 1) { // has card (hint is 1st child)
+                            // Swap: put existing card back to source
+                            const existingCard = dz.lastElementChild;
+                            sources.appendChild(existingCard);
+                        }
+                        dz.appendChild(selectedItem);
+                        playSound('click');
+                        // Reset selection
+                        selectedItem.classList.remove('selected');
+                        selectedItem = null;
+                        document.querySelectorAll('.drop-zone').forEach(d => d.classList.remove('active-target'));
+                    }
+                };
+                targets.appendChild(dz);
+            }
+        }
+
+        function checkStage1Sort() {
+            const targets = document.getElementById('s1-targets').children;
+            let correct = 0;
+            
+            for(let i=0; i<10; i++) {
+                const dz = targets[i];
+                dz.classList.remove('anim-wrong', 'anim-correct');
+                // The card is the second child (first is the hint span)
+                const card = dz.children[1];
+                if (card && parseInt(card.dataset.val) === (i+1)) {
+                    correct++;
+                    dz.classList.add('anim-correct');
+                } else if (card) {
+                    dz.classList.add('anim-wrong');
+                }
+            }
+
+            if (correct === 10) {
+                setTimeout(() => {
+                    runStage1Questions();
+                }, 1000);
+            } else {
+                playSound('wrong');
+                showModal("Chưa chính xác", "Một số nguyên tố chưa nằm đúng vị trí. Hãy kiểm tra lại Số hiệu nguyên tử (số nhỏ ở góc) nhé!", "wrong");
+            }
+        }
+
+        function runStage1Questions() {
+            // Q1
+            showModal("Nhà khoa học đặt câu hỏi (1/2)", "Em vừa sắp xếp các nguyên tố. Các nguyên tố đang được sắp xếp theo đại lượng nào?", "question", [
+                { text: "Theo thứ tự bảng chữ cái tên nguyên tố.", isCorrect: false },
+                { text: "Theo chiều tăng dần của số hiệu nguyên tử (Z).", isCorrect: true },
+                { text: "Theo màu sắc của thẻ.", isCorrect: false }
+            ], () => {
+                // Q2
+                setTimeout(() => {
+                    showModal("Câu hỏi chốt kiến thức (2/2)", "Theo em, nguyên tắc cơ bản để sắp xếp các nguyên tố trong Bảng tuần hoàn hiện đại là gì?", "question", [
+                        { text: "Sắp xếp theo khối lượng nguyên tử tăng dần.", isCorrect: false },
+                        { text: "Sắp xếp theo chiều tăng dần của điện tích hạt nhân (số hiệu nguyên tử).", isCorrect: true }
+                    ], () => {
+                        addScore(30);
+                        showModal("Hoàn thành Chặng 1", "Tuyệt vời! Em đã tự mình tìm ra <strong>nguyên tắc đầu tiên</strong> của Bảng tuần hoàn.<br><br><i>+30 Điểm</i>", "correct", null, () => {
+                            unlockStage(2);
+                            switchScreen('map');
+                        });
+                    });
+                }, 300);
+            });
+        }
+
+
+        // ================= STAGE 2 LOGIC =================
+        function selectS2Label(el, type) {
+            playSound('click');
+            if (selectedItem) selectedItem.classList.remove('selected');
+            if (selectedItem === el) {
+                selectedItem = null;
+                document.querySelectorAll('.s2-drop').forEach(d => d.classList.remove('active-target'));
+                return;
+            }
+            selectedItem = el;
+            selectedItem.dataset.type = type;
+            selectedItem.classList.add('selected');
+            document.querySelectorAll('.s2-drop').forEach(d => d.classList.add('active-target'));
+        }
+
+        function handleS2Drop(dropZone) {
+            if (selectedItem) {
+                // Visual update on drop zone
+                dropZone.innerHTML = selectedItem.innerText.split(' ')[0]; // Just take first word/number for visual fit
+                dropZone.dataset.filled = selectedItem.dataset.type;
+                dropZone.classList.add('border-cyan-400', 'text-white', 'bg-cyan-900/50');
+                
+                playSound('click');
+                selectedItem.classList.remove('selected');
+                selectedItem.classList.add('opacity-30', 'pointer-events-none'); // Disable used label
+                selectedItem = null;
+                document.querySelectorAll('.s2-drop').forEach(d => d.classList.remove('active-target'));
+            }
+        }
+
+        function setupStage2() {
+            // Reset S2
+            document.querySelectorAll('.s2-drop').forEach(dz => {
+                dz.innerHTML = dz.dataset.correct === 'z' ? 'Z' : (dz.dataset.correct === 'sym' ? 'Kí hiệu' : (dz.dataset.correct === 'name' ? 'Tên' : 'Khối lượng'));
+                dz.dataset.filled = '';
+                dz.classList.remove('border-cyan-400', 'text-white', 'bg-cyan-900/50', 'anim-wrong', 'anim-correct');
+            });
+            document.querySelectorAll('.s2-label').forEach(lbl => {
+                lbl.classList.remove('opacity-30', 'pointer-events-none', 'selected');
+            });
+            selectedItem = null;
+        }
+
+        function checkStage2() {
+            let correct = 0;
+            document.querySelectorAll('.s2-drop').forEach(dz => {
+                dz.classList.remove('anim-wrong', 'anim-correct');
+                if (dz.dataset.filled === dz.dataset.correct) {
+                    correct++;
+                    dz.classList.add('anim-correct');
+                } else if (dz.dataset.filled) {
+                    dz.classList.add('anim-wrong');
+                }
+            });
+
+            if (correct === 4) {
+                setTimeout(() => runStage2Questions(), 1000);
+            } else {
+                playSound('wrong');
+                showModal("Lỗi phân tích", "Các nhãn dữ liệu chưa khớp với cấu tạo của Ô nguyên tố. Hãy thử lại!", "wrong", null, () => { setupStage2(); });
+            }
+        }
+
+        function runStage2Questions() {
+            showModal("Thám tử dữ liệu (1/2)", "Dựa vào ô nguyên tố vừa ghép, nếu một nguyên tố có Số hiệu nguyên tử (Z) bằng 11. Em suy ra được điều gì?", "question", [
+                { text: "Nó có 11 hạt neutron.", isCorrect: false },
+                { text: "Nó có 11 proton trong hạt nhân và 11 electron ở vỏ.", isCorrect: true },
+                { text: "Khối lượng của nó là 11.", isCorrect: false }
+            ], () => {
+                setTimeout(() => {
+                    showModal("Thử thách: Ô bí ẩn (2/2)", "Tìm thấy dữ liệu mờ: Khối lượng 24.31, Tên 'Magnesium', Số hiệu 12. Vậy Kí hiệu hóa học của nguyên tố này là gì?", "question", [
+                        { text: "Mn", isCorrect: false },
+                        { text: "Mg", isCorrect: true },
+                        { text: "Ma", isCorrect: false }
+                    ], () => {
+                        addScore(30);
+                        showModal("Hoàn thành Chặng 2", "Tuyệt vời! Bạn đã nắm rõ cấu tạo của <strong>Ô nguyên tố</strong>.<br><br><i>+30 Điểm</i>", "correct", null, () => {
+                            unlockStage(3);
+                            switchScreen('map');
+                        });
+                    });
+                }, 300);
+            });
+        }
+
+
+        // ================= STAGE 3 LOGIC =================
+        // Stage 3 has 3 phases: Row (Period), Col (Group), Boss (Quiz)
+        let s3Phase = 1; 
+        
+        function setupStage3() {
+            s3Phase = 1;
+            renderS3Rows();
+        }
+
+        function renderS3Rows() {
+            const container = document.getElementById('s3-interactive');
+            document.getElementById('s3-instruction').innerText = "Nhiệm vụ: Sắp xếp các nguyên tố vào 2 Hàng (Chu kì 2 và Chu kì 3) theo đúng quy luật chiều tăng dần của số hiệu nguyên tử (Z).";
+            document.getElementById('btn-s3-check').innerText = "Xác nhận Hàng Ngang";
+            document.getElementById('btn-s3-check').onclick = checkS3Rows;
+
+            // Bổ sung các nguyên tố Chu kì 3 (Na, Mg, Al, Si) kết hợp cùng Chu kì 2
+            const elements = [
+                { sym: 'Li', z: 3, shell: '2, 1' }, { sym: 'Be', z: 4, shell: '2, 2' },
+                { sym: 'B', z: 5, shell: '2, 3' }, { sym: 'C', z: 6, shell: '2, 4' },
+                { sym: 'Na', z: 11, shell: '2, 8, 1' }, { sym: 'Mg', z: 12, shell: '2, 8, 2' },
+                { sym: 'Al', z: 13, shell: '2, 8, 3' }, { sym: 'Si', z: 14, shell: '2, 8, 4' }
+            ].sort(() => Math.random() - 0.5);
+
+            let html = `
+                <div class="flex flex-col gap-4 h-full justify-center">
+                    <div class="flex flex-col gap-4">
+                        <!-- Hàng ngang 1 -->
+                        <div class="flex items-center gap-4 bg-slate-800 p-3 rounded-xl border border-slate-600">
+                            <div class="w-24 text-center font-bold text-cyan-400 text-sm">Hàng 2<br><span class="text-xs text-slate-400">(2 lớp e)</span></div>
+                            <div class="flex gap-2 overflow-x-auto" id="s3-row1-targets">
+                                ${Array(4).fill(0).map((_, i) => `<div class="drop-zone bg-slate-700 shrink-0 relative" data-idx="${i}"></div>`).join('')}
+                            </div>
+                        </div>
+                        <!-- Hàng ngang 2 -->
+                        <div class="flex items-center gap-4 bg-slate-800 p-3 rounded-xl border border-slate-600">
+                            <div class="w-24 text-center font-bold text-yellow-400 text-sm">Hàng 3<br><span class="text-xs text-slate-400">(3 lớp e)</span></div>
+                            <div class="flex gap-2 overflow-x-auto" id="s3-row2-targets">
+                                ${Array(4).fill(0).map((_, i) => `<div class="drop-zone bg-slate-700 shrink-0 relative" data-idx="${i}"></div>`).join('')}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap justify-center gap-2 mt-4 p-4 bg-slate-800/50 rounded-xl" id="s3-row-sources">
+                    </div>
+                </div>
+            `;
+            container.innerHTML = html;
+
+            const sources = document.getElementById('s3-row-sources');
+            elements.forEach(el => {
+                const card = document.createElement('div');
+                card.className = 'element-card shrink-0';
+                card.innerHTML = `<span class="atomic-num">${el.z}</span><span class="symbol">${el.sym}</span><span class="name text-[0.45rem] mt-1 text-cyan-300">e: ${el.shell}</span>`;
+                
+                card.onclick = () => {
+                    if (card.parentElement.id === 's3-row-sources') {
+                        handleItemClick(card, 's3row', el.z);
+                    } else {
+                        sources.appendChild(card);
+                        playSound('click');
+                    }
+                };
+                sources.appendChild(card);
+            });
+
+            // Logic Chọn - Thả vào 2 hàng riêng biệt
+            document.querySelectorAll('#s3-row1-targets .drop-zone, #s3-row2-targets .drop-zone').forEach(dz => {
+                dz.onclick = () => {
+                    if (selectedItem && selectedSourceType === 's3row') {
+                        if (dz.children.length === 0) {
+                            dz.appendChild(selectedItem);
+                            playSound('click');
+                            selectedItem.classList.remove('selected');
+                            selectedItem = null;
+                            document.querySelectorAll('.drop-zone').forEach(d => d.classList.remove('active-target'));
+                        }
+                    }
+                };
+            });
+        }
+
+        function checkS3Rows() {
+            const row1 = document.getElementById('s3-row1-targets').children;
+            const row2 = document.getElementById('s3-row2-targets').children;
+            let correct = 0;
+            
+            // Kiểm tra Hàng 1 (Li 3 -> C 6)
+            for(let i=0; i<4; i++) {
+                const dz = row1[i];
+                dz.classList.remove('anim-wrong', 'anim-correct');
+                const card = dz.children[0];
+                if (card) {
+                    const z = parseInt(card.querySelector('.atomic-num').innerText);
+                    if (z === i + 3) {
+                        correct++;
+                        dz.classList.add('anim-correct');
+                    } else {
+                        dz.classList.add('anim-wrong');
+                    }
+                }
+            }
+            
+            // Kiểm tra Hàng 2 (Na 11 -> Si 14)
+            for(let i=0; i<4; i++) {
+                const dz = row2[i];
+                dz.classList.remove('anim-wrong', 'anim-correct');
+                const card = dz.children[0];
+                if (card) {
+                    const z = parseInt(card.querySelector('.atomic-num').innerText);
+                    if (z === i + 11) {
+                        correct++;
+                        dz.classList.add('anim-correct');
+                    } else {
+                        dz.classList.add('anim-wrong');
+                    }
+                }
+            }
+
+            if (correct === 8) {
+                setTimeout(() => {
+                    showModal("Phát hiện quy luật Hàng ngang", "Quan sát phân bố electron (dòng e ở dưới). Các nguyên tử trong cùng một hàng ngang này có đặc điểm chung gì?", "question", [
+                        { text: "Có cùng số electron lớp ngoài cùng.", isCorrect: false },
+                        { text: "Có cùng số lớp electron (Hàng 2 có 2 lớp, Hàng 3 có 3 lớp).", isCorrect: true }
+                    ], () => {
+                        showModal("Kết luận", "Hàng ngang trong Bảng tuần hoàn được gọi là <strong>Chu kì</strong>. Các nguyên tố có <strong>cùng số lớp electron</strong> sẽ được xếp vào cùng một chu kì.<br><br>Số thứ tự chu kì = Số lớp electron.", "info", null, () => {
+                            renderS3Cols();
+                        });
+                    });
+                }, 1000);
+            } else {
+                playSound('wrong');
+                showModal("Lỗi sắp xếp", "Hàng 2 dành cho các nguyên tố có 2 lớp electron, Hàng 3 dành cho các nguyên tố có 3 lớp electron. Chú ý sắp xếp theo chiều tăng dần số hiệu nguyên tử (Z) từ trái qua phải!", "wrong");
+            }
+        }
+
+        function renderS3Cols() {
+            const container = document.getElementById('s3-interactive');
+            document.getElementById('s3-instruction').innerText = "Nhiệm vụ: Ghép các nguyên tố (Li, Na, K) vào Cột 1 và (Be, Mg) vào Cột 2.";
+            document.getElementById('btn-s3-check').innerText = "Xác nhận Cột Dọc";
+            document.getElementById('btn-s3-check').onclick = checkS3Cols;
+
+            const elements = [
+                { sym: 'Li', z: 3, shell: '2, 1', group: 1 }, { sym: 'Na', z: 11, shell: '2, 8, 1', group: 1 }, { sym: 'K', z: 19, shell: '2, 8, 8, 1', group: 1 },
+                { sym: 'Be', z: 4, shell: '2, 2', group: 2 }, { sym: 'Mg', z: 12, shell: '2, 8, 2', group: 2 }
+            ].sort(() => Math.random() - 0.5);
+
+            let html = `
+                <div class="flex flex-col md:flex-row gap-8 justify-center items-center h-full">
+                    <div class="flex gap-8">
+                        <div class="flex flex-col gap-2 bg-slate-800 p-4 rounded-xl border border-slate-600" id="col-1-targets">
+                            <div class="text-center text-sm font-bold text-slate-400 mb-2">CỘT 1<br><span class="text-xs text-slate-400 font-normal text-cyan-300">(1 electron ngoài cùng)</span></div>
+                            <div class="drop-zone relative" data-g="1"></div>
+                            <div class="drop-zone relative" data-g="1"></div>
+                            <div class="drop-zone relative" data-g="1"></div>
+                        </div>
+                        <div class="flex flex-col gap-2 bg-slate-800 p-4 rounded-xl border border-slate-600" id="col-2-targets">
+                            <div class="text-center text-sm font-bold text-slate-400 mb-2">CỘT 2<br><span class="text-xs text-slate-400 font-normal text-yellow-300">(2 electron ngoài cùng)</span></div>
+                            <div class="drop-zone relative" data-g="2"></div>
+                            <div class="drop-zone relative" data-g="2"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex flex-wrap justify-center gap-2 max-w-[200px]" id="s3-col-sources">
+                    </div>
+                </div>
+            `;
+            container.innerHTML = html;
+
+            const sources = document.getElementById('s3-col-sources');
+            elements.forEach(el => {
+                const card = document.createElement('div');
+                card.className = 'element-card shrink-0';
+                card.dataset.g = el.group;
+                card.innerHTML = `<span class="atomic-num">${el.z}</span><span class="symbol">${el.sym}</span><span class="name text-[0.45rem] mt-1 text-cyan-300">e: ${el.shell}</span>`;
+                
+                card.onclick = () => {
+                    if (card.parentElement.id === 's3-col-sources') {
+                        // Pick user interaction: click card -> highlight -> click column slot.
+                        handleItemClick(card, 's3col', el.group);
+                    } else {
+                        sources.appendChild(card);
+                        playSound('click');
+                    }
+                };
+                sources.appendChild(card);
+            });
+
+            // Make drop zones interactive
+            document.querySelectorAll('#col-1-targets .drop-zone, #col-2-targets .drop-zone').forEach(dz => {
+                dz.onclick = () => {
+                    if (selectedItem && selectedSourceType === 's3col') {
+                        if (dz.children.length === 0) {
+                            dz.appendChild(selectedItem);
+                            playSound('click');
+                            selectedItem.classList.remove('selected');
+                            selectedItem = null;
+                            document.querySelectorAll('.drop-zone').forEach(d => d.classList.remove('active-target'));
+                        }
+                    }
+                };
+            });
+        }
+
+        function checkS3Cols() {
+            let correct = 0;
+            let total = 5;
+            
+            document.querySelectorAll('#col-1-targets .drop-zone, #col-2-targets .drop-zone').forEach(dz => {
+                dz.classList.remove('anim-wrong', 'anim-correct');
+                const card = dz.children[0];
+                if (card) {
+                    if (card.dataset.g === dz.dataset.g) {
+                        correct++;
+                        dz.classList.add('anim-correct');
+                    } else {
+                        dz.classList.add('anim-wrong');
+                    }
+                }
+            });
+
+            if (correct === total) {
+                setTimeout(() => {
+                    showModal("Phát hiện quy luật Cột dọc", "Quan sát số electron lớp ngoài cùng (số cuối cùng trong dãy e). Các nguyên tử trong cùng một cột có đặc điểm gì?", "question", [
+                        { text: "Có cùng số lớp electron.", isCorrect: false },
+                        { text: "Có số electron lớp ngoài cùng bằng nhau.", isCorrect: true }
+                    ], () => {
+                        showModal("Kết luận", "Cột dọc trong Bảng tuần hoàn được gọi là <strong>Nhóm</strong>. Các nguyên tố nhóm A trong cùng một nhóm có <strong>số electron lớp ngoài cùng bằng nhau</strong> (tính chất hóa học tương tự nhau).", "info", null, () => {
+                            startFinalBoss();
+                        });
+                    });
+                }, 1000);
+            } else {
+                playSound('wrong');
+                showModal("Lỗi sắp xếp", "Chưa đúng cột. Nhóm (Li, Na, K) vào Cột 1 và (Be, Mg) vào Cột 2. Nhấn vào phần tử trong cột để bỏ ra.", "wrong");
+            }
+        }
+
+        function startFinalBoss() {
+            document.getElementById('s3-instruction').innerText = "THỬ THÁCH TRÙM CUỐI: Trả lời đúng 3 câu hỏi trắc nghiệm liên tiếp để khôi phục toàn bộ dữ liệu!";
+            document.getElementById('s3-controls').innerHTML = ''; // remove check button
+            const container = document.getElementById('s3-interactive');
+            
+            const questions = [
+                { q: "Số thứ tự của Chu kì cho biết điều gì?", ans: [{t:"Số hạt proton", c:false}, {t:"Số electron lớp ngoài cùng", c:false}, {t:"Số lớp electron", c:true}] },
+                { q: "Các nguyên tố cùng một Nhóm A có điểm chung gì?", ans: [{t:"Cùng số lớp electron", c:false}, {t:"Cùng số electron lớp ngoài cùng", c:true}, {t:"Cùng khối lượng nguyên tử", c:false}] },
+                { q: "Phân biệt Chu kì và Nhóm:", ans: [{t:"Chu kì là cột dọc, Nhóm là hàng ngang", c:false}, {t:"Chu kì là hàng ngang, Nhóm là cột dọc", c:true}] }
+            ];
+
+            let currQ = 0;
+
+            function renderQ() {
+                if (currQ >= questions.length) {
+                    // Win!
+                    addScore(40);
+                    clearInterval(state.timerInterval);
+                    switchScreen('result');
+                    document.getElementById('final-score').innerText = state.score;
+                    document.getElementById('final-time').innerText = formatTime(state.time);
+                    playSound('unlock');
+                    return;
+                }
+
+                const q = questions[currQ];
+                let html = `
+                    <div class="bg-slate-800 border-2 border-cyan-500 rounded-xl p-8 max-w-2xl mx-auto w-full text-center shadow-[0_0_20px_rgba(6,182,212,0.3)]">
+                        <h3 class="text-xl font-bold mb-6 text-yellow-400">Câu hỏi ${currQ+1}/3</h3>
+                        <p class="text-2xl mb-8">${q.q}</p>
+                        <div class="flex flex-col gap-4">
+                            ${q.ans.map((a, i) => `
+                                <button class="p-4 bg-slate-700 hover:bg-cyan-600 border border-slate-500 rounded-lg text-lg transition-all" onclick="window.answerBoss(${i})">${a.t}</button>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+                container.innerHTML = html;
+
+                window.answerBoss = (idx) => {
+                    if (q.ans[idx].c) {
+                        playSound('correct');
+                        currQ++;
+                        renderQ();
+                    } else {
+                        playSound('wrong');
+                        showModal("Sai rồi", "Đáp án chưa chính xác. Hệ thống yêu cầu thử lại câu hỏi này!", "wrong");
+                    }
+                }
+            }
+
+            renderQ();
+        }
+
+    </script>
+</body>
+</html>
